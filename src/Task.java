@@ -1,97 +1,86 @@
-import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Task {
 
     private int id;
-    private static int lastId = 0;
-    private Status status;
     private String description;
+    private Status status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    /*
-    * ToDo - Alterar formatação de data para DD/MM/YYYY*/
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-
-    public void markTodo(){
-        this.status = Status.TODO;
-    }
-
-    public void markInProgress(){
-        this.status = Status.IN_PROGRESS;
-    }
-
-    public void markDone (){
-        this.status = Status.DONE;
-    }
-
-    public void setId(int id) {
+    public Task(int id, String description) {
         this.id = id;
-    }
-
-    public static int getLastId() {
-        return lastId;
-    }
-
-    public static void setLastId(int lastId) {
-        Task.lastId = lastId;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public void setDescription(String description) {
         this.description = description;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public int getId (){
-        return id;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public Task(int id, Status status, String description, String createdAt, String updatedAt) {
-        this.id = ++lastId;
         this.status = Status.TODO;
-        this.description = description;
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = createdAt;
+    }
+
+    public int getId() { return id; }
+    public String getDescription() { return description; }
+    public Status getStatus() { return status; }
+
+    public void updateDescription(String description) {
+        this.description = description;
         this.updatedAt = LocalDateTime.now();
     }
 
-    @Override
-    public String toString() {
-        return "Task{" +
-                "id=" + id +
-                ", description='" + description + '\'' +
-                ", status='" + status + '\'' +
-                ", createdAt='" + createdAt + '\'' +
-                ", updatedAt='" + updatedAt + '\'' +
-                '}';
+    public void updateStatus(Status status) {
+        this.status = status;
+        this.updatedAt = LocalDateTime.now();
     }
 
+    public String toJson() {
+        return String.format(
+                "{\"id\":%d,\"description\":\"%s\",\"status\":\"%s\",\"createdAt\":\"%s\",\"updatedAt\":\"%s\"}",
+                id,
+                escape(description),
+                status.toJson(),
+                createdAt.format(FORMATTER),
+                updatedAt.format(FORMATTER)
+        );
+    }
+
+    public static Task fromJson(String json) {
+        Map<String, String> map = parse(json);
+
+        Task t = new Task(
+                Integer.parseInt(map.get("id")),
+                map.get("description")
+        );
+
+        t.status = Status.fromString(map.get("status"));
+        t.createdAt = LocalDateTime.parse(map.get("createdAt"), FORMATTER);
+        t.updatedAt = LocalDateTime.parse(map.get("updatedAt"), FORMATTER);
+
+        return t;
+    }
+
+    private static Map<String, String> parse(String json) {
+        Map<String, String> map = new HashMap<>();
+
+        json = json.substring(1, json.length() - 1); // remove {}
+
+        String[] pairs = json.split(",");
+
+        for (String pair : pairs) {
+            String[] kv = pair.split(":", 2);
+
+            String key = kv[0].replace("\"", "").trim();
+            String value = kv[1].replace("\"", "").trim();
+
+            map.put(key, value);
+        }
+
+        return map;
+    }
+
+    private String escape(String s) {
+        return s.replace("\"", "\\\"");
+    }
 }

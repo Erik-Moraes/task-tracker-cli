@@ -1,23 +1,24 @@
 public enum Status {
 
-   TODO("Todo"),
-   IN_PROGRESS("In-Progress"),
-   DONE("Done");
+   TODO,
+   IN_PROGRESS,
+   DONE;
 
-   private final String value;
-
-
-    Status(String value) {
-        this.value = value;
+    public static Status fromString(String value) {
+        return switch (value.toLowerCase()) {
+            case "todo" -> TODO;
+            case "in-progress" -> IN_PROGRESS;
+            case "done" -> DONE;
+            default -> throw new IllegalArgumentException("Invalid Status");
+        };
     }
 
-   public String getValue() {
-      return value;
-   }
-
-   @Override
-   public String toString() {
-      return value;
-
-   }
+    public String toJson() {
+        return switch (this) {
+            case TODO -> "todo";
+            case IN_PROGRESS -> "in-progress";
+            case DONE -> "done";
+        };
+    }
 }
+
